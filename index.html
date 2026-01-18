@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Traductor n8n</title>
+  <style>
+  :root{
+    --bg1:#070712; --bg2:#0b1026;
+    --cardA: rgba(255,255,255,.08);
+    --cardB: rgba(255,255,255,.04);
+    --stroke: rgba(255,255,255,.14);
+    --stroke2: rgba(255,255,255,.10);
+
+    --text:#f4f6ff;
+    --muted: rgba(244,246,255,.70);
+
+    --accent:#7c5cff;
+    --accent2:#2ee59d;
+
+    --danger:#ff6b6b;
+
+    --shadow: 0 28px 90px rgba(0,0,0,.55);
+    --shadow2: 0 14px 35px rgba(0,0,0,.28);
+
+    --radius: 18px;
+    --radius2: 14px;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+
+  body{
+    margin:0;
+    font-family: ui-sans-serif,system-ui,Segoe UI,Roboto,Arial;
+    color:var(--text);
+    min-height:100vh;
+    background:
+      radial-gradient(1200px 600px at 12% 20%, rgba(124,92,255,.35), transparent 60%),
+      radial-gradient(900px 500px at 85% 22%, rgba(46,229,157,.22), transparent 55%),
+      radial-gradient(1000px 600px at 40% 95%, rgba(124,92,255,.16), transparent 60%),
+      linear-gradient(180deg, var(--bg1), var(--bg2));
+    padding: 28px 18px 48px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  /* contenedor más “aireado” */
+  .wrap{ width:min(1020px, 100%); }
+
+  .top{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:14px;
+    margin-bottom: 16px;
+  }
+
+  .brand{ display:flex; gap:12px; align-items:center; }
+
+  .logo{
+    width:46px; height:46px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(124,92,255,1), rgba(46,229,157,.78));
+    box-shadow: 0 14px 38px rgba(124,92,255,.20);
+    position: relative;
+    overflow:hidden;
+  }
+  .logo:after{
+    content:"";
+    position:absolute; inset:-30%;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.35), transparent 60%);
+    transform: rotate(18deg);
+  }
+
+  h1{
+    margin:0;
+    font-size: 24px;
+    letter-spacing:.2px;
+    line-height:1.05;
+  }
+  .sub{
+    margin:6px 0 0;
+    color: var(--muted);
+    font-size: 13.5px;
+    line-height:1.35;
+  }
+
+  .pill{
+    padding: 10px 12px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.07);
+    border: 1px solid var(--stroke);
+    color: rgba(244,246,255,.84);
+    font-size: 12px;
+    display:flex;
+    gap:8px;
+    align-items:center;
+    box-shadow: var(--shadow2);
+    backdrop-filter: blur(10px);
+    white-space: nowrap;
+  }
+  .dot{
+    width:8px; height:8px; border-radius:50%;
+    background: var(--accent2);
+    box-shadow: 0 0 0 6px rgba(46,229,157,.10);
+  }
+
+  /* Card con borde y brillo sutil */
+  .card{
+    background: linear-gradient(180deg, var(--cardA), var(--cardB));
+    border: 1px solid var(--stroke2);
+    border-radius: calc(var(--radius) + 2px);
+    box-shadow: var(--shadow);
+    overflow:hidden;
+    backdrop-filter: blur(14px);
+    position: relative;
+  }
+  .card:before{
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background: radial-gradient(900px 260px at 18% 10%, rgba(124,92,255,.18), transparent 60%);
+  }
+
+  .toolbar{
+    padding: 16px 16px 6px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+    justify-content:space-between;
+    position: relative;
+  }
+
+  .controls{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+  }
+  label{
+    font-size: 12px;
+    color: rgba(244,246,255,.72);
+    margin-right: 2px;
+  }
+
+  select{
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(12,14,28,.55);
+    color: var(--text);
+    outline: none;
+    min-width: 190px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    transition: border-color .15s ease, transform .05s ease;
+  }
+  select:focus{
+    border-color: rgba(124,92,255,.55);
+  }
+
+  .btn{
+    border:0;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-weight: 750;
+    letter-spacing:.2px;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    color: #0a0b12;
+    background: linear-gradient(135deg, var(--accent), #a58cff);
+    box-shadow: 0 14px 34px rgba(124,92,255,.22);
+    transition: transform .08s ease, filter .15s ease, box-shadow .15s ease;
+    user-select:none;
+  }
+  .btn:hover{ filter: brightness(1.03); }
+  .btn:active{ transform: translateY(1px); }
+  .btn:disabled{ opacity:.6; cursor:not-allowed; }
+
+  .btn.secondary{
+    background: rgba(255,255,255,.08);
+    color: var(--text);
+    border: 1px solid rgba(255,255,255,.14);
+    box-shadow: none;
+  }
+
+  .btn.ghost{
+    background: rgba(255,255,255,.03);
+    color: rgba(244,246,255,.92);
+    border: 1px solid rgba(255,255,255,.12);
+    box-shadow: none;
+  }
+
+  /* WhatsApp */
+  .btn.whatsapp{
+    background: linear-gradient(135deg, #25D366, #1ebe5d);
+    color: #062c1b;
+    box-shadow: 0 14px 30px rgba(37,211,102,.16);
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    padding: 14px 16px 16px;
+    position: relative;
+  }
+
+  @media (max-width: 860px){
+    body{ padding: 18px 12px 34px; }
+    .top{ align-items:flex-start; flex-direction:column; }
+    .pill{ align-self:flex-start; }
+    .grid{ grid-template-columns: 1fr; }
+    select{ min-width: 170px; }
+  }
+
+  .panel{
+    background: rgba(10,12,24,.48);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: var(--radius);
+    padding: 12px;
+    min-height: 240px;
+    display:flex;
+    flex-direction:column;
+    gap: 10px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+  }
+
+  .panel h2{
+    margin:0;
+    font-size: 13px;
+    color: rgba(244,246,255,.86);
+    font-weight: 800;
+    letter-spacing:.2px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .small{
+    font-size: 12px;
+    color: rgba(244,246,255,.62);
+    font-weight: 600;
+  }
+
+  textarea{
+    width:100%;
+    flex: 1;
+    resize: vertical;
+    min-height: 160px;
+    padding: 12px 12px;
+    border-radius: var(--radius);
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(6,7,14,.55);
+    color: var(--text);
+    outline:none;
+    line-height:1.45;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    transition: border-color .15s ease;
+  }
+  textarea:focus{
+    border-color: rgba(124,92,255,.55);
+  }
+
+  .out{
+    flex:1;
+    padding: 12px;
+    border-radius: var(--radius);
+    border: 1px dashed rgba(255,255,255,.20);
+    background: rgba(6,7,14,.40);
+    white-space: pre-wrap;
+    overflow:auto;
+    min-height: 160px;
+  }
+
+  .status{
+    padding: 12px 16px 14px;
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+    border-top: 1px solid rgba(255,255,255,.10);
+    color: rgba(244,246,255,.72);
+    font-size: 12px;
+    position: relative;
+  }
+
+  .error{ color: var(--danger); font-weight: 800; }
+  .ok{ color: var(--accent2); font-weight: 800; }
+
+  .spinner{
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(10,11,18,.25);
+    border-top-color: rgba(10,11,18,.95);
+    display:inline-block;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .toast{
+    position: fixed;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15,18,34,.92);
+    border: 1px solid rgba(255,255,255,.16);
+    padding: 10px 12px;
+    border-radius: 999px;
+    color: rgba(244,246,255,.92);
+    font-size: 12px;
+    box-shadow: 0 18px 50px rgba(0,0,0,.35);
+    opacity: 0;
+    pointer-events:none;
+    transition: opacity .18s ease;
+  }
+  .toast.show{ opacity: 1; }
+</style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>Traductor n8n + IA</h1>
+          <div class="sub">Escribe el texto, elige el idioma destino y obtén la traducción al instante.</div>
+        </div>
+      </div>
+      <div class="pill"><span class="dot"></span>Webhook activo (producción)</div>
+    </div>
+
+    <div class="card">
+      <div class="toolbar">
+        <div class="controls">
+          <label for="target">Idioma destino</label>
+          <select id="target" title="Idioma destino">
+            <option value="es">Español (es)</option>
+            <option value="en">Inglés (en)</option>
+            <option value="fr">Francés (fr)</option>
+            <option value="pt">Portugués (pt)</option>
+            <option value="de">Alemán (de)</option>
+            <option value="it">Italiano (it)</option>
+          </select>
+
+          <button class="btn ghost" id="swap" type="button" title="Intercambiar idiomas">
+            ⇄ Swap
+          </button>
+
+          <button class="btn" id="btn" type="button">
+            <span id="btnIcon">🪄</span>
+            <span id="btnText">Traducir</span>
+          </button>
+
+          <button class="btn secondary" id="btnClear" type="button">Limpiar</button>
+
+          <!-- Botón WhatsApp -->
+          <button class="btn whatsapp" id="shareWa" type="button" title="Compartir por WhatsApp">
+            📲 WhatsApp
+          </button>
+        </div>
+
+        <div class="small" id="charCount">0 caracteres</div>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <h2>
+            Texto original
+            <span class="small">Tip: puedes pegar párrafos largos</span>
+          </h2>
+          <textarea id="text" placeholder="Ej: Hello world..."></textarea>
+        </div>
+
+        <div class="panel">
+          <h2>
+            Traducción
+            <button class="btn secondary" id="copy" type="button">Copiar</button>
+          </h2>
+          <div id="out" class="out"></div>
+        </div>
+      </div>
+
+      <div class="status">
+        <div id="statusLeft"></div>
+        <div id="statusRight">Fuente: n8n Webhook + OpenAI</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast">Copiado ✅</div>
+
+  <script>
+    const WEBHOOK_URL = "https://sihat.app.n8n.cloud/webhook/translate";
+
+    const $ = (id) => document.getElementById(id);
+    const btn = $("btn");
+    const btnText = $("btnText");
+    const btnIcon = $("btnIcon");
+    const out = $("out");
+    const statusLeft = $("statusLeft");
+    const charCount = $("charCount");
+    const toast = $("toast");
+
+    function toastShow(msg){
+      toast.textContent = msg;
+      toast.classList.add("show");
+      setTimeout(()=> toast.classList.remove("show"), 1200);
+    }
+
+    function setLoading(isLoading){
+      btn.disabled = isLoading;
+      btnIcon.innerHTML = isLoading ? "<span class='spinner'></span>" : "🪄";
+      btnText.textContent = isLoading ? "Traduciendo..." : "Traducir";
+    }
+
+    function safeText(s){ return (s ?? "").toString(); }
+
+    $("text").addEventListener("input", () => {
+      charCount.textContent = `${$("text").value.length} caracteres`;
+    });
+
+    $("btnClear").addEventListener("click", () => {
+      $("text").value = "";
+      out.textContent = "";
+      statusLeft.textContent = "Listo.";
+      charCount.textContent = "0 caracteres";
+    });
+
+    $("swap").addEventListener("click", () => {
+      const t = $("target");
+      t.value = (t.value === "es") ? "en" : "es";
+      toastShow("Idioma cambiado ✅");
+    });
+
+    $("copy").addEventListener("click", async () => {
+      const txt = out.textContent.trim();
+      if (!txt) return toastShow("Nada para copiar");
+      try{
+        await navigator.clipboard.writeText(txt);
+        toastShow("Copiado ✅");
+      }catch{
+        toastShow("No se pudo copiar");
+      }
+    });
+
+    // ✅ Compartir por WhatsApp (SOLO EL LINK)
+    $("shareWa").addEventListener("click", () => {
+      const url = window.location.href;  // esto será tu link de GitHub Pages
+      const waUrl = "https://wa.me/?text=" + encodeURIComponent(url);
+      window.open(waUrl, "_blank");
+    });
+
+    btn.addEventListener("click", async () => {
+      const text = $("text").value.trim();
+      const target = $("target").value;
+
+      if (!text){
+        out.innerHTML = "<span style='color: var(--danger); font-weight:700;'>Escribe un texto para traducir.</span>";
+        statusLeft.innerHTML = "<span class='error'>Falta texto.</span>";
+        return;
+      }
+
+      setLoading(true);
+      statusLeft.textContent = "Conectando al webhook...";
+
+      try{
+        const url = WEBHOOK_URL
+          + "?text=" + encodeURIComponent(text)
+          + "&target=" + encodeURIComponent(target);
+
+        const res = await fetch(url, { method: "GET" });
+        const data = await res.json().catch(()=> ({}));
+
+        if (!res.ok || data.success === false){
+          const msg = data.error || res.statusText || "Error desconocido";
+          out.innerHTML = "<span class='error'>"+ safeText(msg) +"</span>";
+          statusLeft.innerHTML = "<span class='error'>Error.</span>";
+        } else {
+          out.textContent = safeText(data.translation) || "(sin traducción)";
+          statusLeft.innerHTML = "<span class='ok'></span> Traducido a <b>"+ safeText(data.target || target) +"</b>";
+        }
+      }catch(e){
+        out.innerHTML = "<span class='error'>No se pudo conectar al webhook. Revisa que el workflow esté activo y la URL sea de producción.</span>";
+        statusLeft.innerHTML = "<span class='error'>Sin conexión.</span>";
+      }finally{
+        setLoading(false);
+      }
+    });
+  </script>
+</body>
+</html>
