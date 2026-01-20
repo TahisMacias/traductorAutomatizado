@@ -483,7 +483,163 @@
         setLoading(false);
       }
     });
+// ==========================
+// 🤖 Chat de ayuda (envía correo con la traducción)
+// ==========================
+
+// Botón flotante
+const helpBtn = document.createElement("button");
+helpBtn.className = "btn ghost";
+helpBtn.type = "button";
+helpBtn.textContent = "💬 Ayuda";
+helpBtn.style.cssText = "position:fixed; right:22px; bottom:22px; z-index:9999;";
+document.body.appendChild(helpBtn);
+
+// Caja del chat
+const chatBox = document.createElement("div");
+chatBox.style.cssText = `
+  position:fixed; right:22px; bottom:78px; width:340px; height:460px; z-index:9999;
+  background: rgba(15,18,34,.92);
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 16px;
+  box-shadow: 0 18px 50px rgba(0,0,0,.35);
+  overflow:hidden;
+  display:none;
+  backdrop-filter: blur(12px);
+`;
+
+chatBox.innerHTML = `
+  <div style="padding:12px 12px; font-weight:800; color:rgba(244,246,255,.95); border-bottom:1px solid rgba(255,255,255,.12); display:flex; justify-content:space-between; align-items:center;">
+    <span>Asistente 🤖</span>
+    <button id="chatClose" class="btn secondary" type="button" style="padding:6px 10px; border-radius:10px;">✕</button>
+  </div>
+
+  <div id="chatLog" style="padding:12px; height: 330px; overflow:auto; color: rgba(244,246,255,.95); font-size: 13.5px;"></div>
+
+  <div style="display:flex; gap:8px; padding:12px; border-top:1px solid rgba(255,255,255,.12);">
+    <input id="chatInput" placeholder="Escribe aquí..." style="flex:1; padding:10px; border-radius:12px; border:1px solid rgba(255,255,255,.16); background: rgba(6,7,14,.55); color: rgba(244,246,255,.95); outline:none;" />
+    <button id="chatSend" class="btn" type="button" style="padding:10px 12px; border-radius:12px;">Enviar</button>
+  </div>
+`;
+document.body.appendChild(chatBox);
+
+const chatLog = document.getElementById("chatLog");
+const chatInput = document.getElementById("chatInput");
+
+function escapeHtml(s){
+  return (s ?? "").toString()
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;");
+}
+
+function addChat(role, text){
+  const line = document.createElement("div");
+  line.style.margin = "10px 0";
+  line.innerHTML = `<b>${role}:</b> ${escapeHtml(text)}`;
+  chatLog.appendChild(line);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+// Estado conversacional
+let awaitingEmail = false;
+
+function getOriginal(){ return $("text").value.trim(); }
+function getTranslation(){ return out.textContent.trim(); }
+
+function extractEmail(text){
+  const m = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+  return m ? m[0] : null;
+}
+
+async function sendEmail(to){
+  const original = getOriginal();
+  const translation = getTranslation();
+
+  if (!translation){
+    addChat("Bot", "Primero genera una traducción (botón “Traducir”).");
+    return;
+  }
+
+  addChat("Bot", `Enviando correo a ${to}...`);
+
+  try{
+    const url =
+      WEBHOOK_SEND_EMAIL +
+      "?to=" + encodeURIComponent(to) +
+      "&subject=" + encodeURIComponent("Traducción desde Traductor n8n + IA") +
+      "&original=" + encodeURIComponent(original) +
+      "&translation=" + encodeURIComponent(translation);
+
+    const res = await fetch(url, { method: "GET" });
+    const data = await res.json().catch(()=> ({}));
+
+    if (!res.ok || data.ok === false){
+      addChat("Bot", "❌ No se pudo enviar el correo.");
+      return;
+    }
+
+    addChat("Bot", "✅ Correo enviado y guardado en Google Sheets.");
+  }catch(e){
+    addChat("Bot", "❌ Error de conexión.");
+  }
+}
+
+
+function handleUserMessage(msg){
+  if (awaitingEmail){
+    const email = extractEmail(msg);
+    if (!email){
+      addChat("Bot", "No veo un correo válido. Ej: persona@dominio.com");
+      return;
+    }
+    awaitingEmail = false;
+    sendEmail(email);
+    return;
+  }
+
+  // intención: enviar correo
+  if (/(correo|email|mail|enviar|manda)/i.test(msg)){
+    if (!getTranslation()){
+      addChat("Bot", "Aún no hay traducción. Haz clic en “Traducir” y luego dime: “envíalo por correo”.");
+      return;
+    }
+    awaitingEmail = true;
+    addChat("Bot", "Perfecto. ¿A qué correo lo envío? (ej: persona@dominio.com)");
+    return;
+  }
+
+  addChat("Bot", "Puedo enviar la traducción por correo. Escribe: “enviar por correo”.");
+}
+
+function sendChat(){
+  const msg = chatInput.value.trim();
+  if (!msg) return;
+  chatInput.value = "";
+  addChat("Tú", msg);
+  handleUserMessage(msg);
+}
+
+helpBtn.addEventListener("click", () => {
+  const isOpen = chatBox.style.display === "block";
+  chatBox.style.display = isOpen ? "none" : "block";
+
+  if (!isOpen && !chatBox.dataset.greeted){
+    chatBox.dataset.greeted = "1";
+    addChat("Bot", "Hola 🙂 Puedo ayudarte a enviar la traducción por correo. Escribe: “enviar por correo”.");
+  }
+  setTimeout(()=> chatInput.focus(), 50);
+});
+
+document.getElementById("chatClose").addEventListener("click", () => {
+  chatBox.style.display = "none";
+});
+
+document.getElementById("chatSend").addEventListener("click", sendChat);
+
+chatInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") sendChat();
+});
   </script>
 </body>
 </html>
-
