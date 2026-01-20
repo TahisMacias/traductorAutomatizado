@@ -394,6 +394,7 @@
 
   <script>
     const WEBHOOK_URL = "https://sihat.app.n8n.cloud/webhook/translate";
+    const WEBHOOK_SEND_EMAIL = "https://proxy-n8n-psi.vercel.app/api/send_email";
 
     const $ = (id) => document.getElementById(id);
     const btn = $("btn");
@@ -585,7 +586,6 @@ async function sendEmail(to){
   }
 }
 
-
 function handleUserMessage(msg){
   if (awaitingEmail){
     const email = extractEmail(msg);
@@ -643,3 +643,4 @@ chatInput.addEventListener("keydown", (e) => {
   </script>
 </body>
 </html>
+
